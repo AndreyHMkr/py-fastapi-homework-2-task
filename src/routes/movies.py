@@ -32,12 +32,13 @@ async def get_movies(page: int = Query(1, ge=1),
     )
     result = await db.execute(stmt)
     movies = result.scalars().all()
+    short_movies = [MovieShortSchema.model_validate(movie) for movie in movies]
     base_url = "/theater/movies/"
     prev_url = f"{base_url}?page={page - 1}&per_page={per_page}" if page > 1 else None
     next_url = f"{base_url}?page={page + 1}&per_page={per_page}" if page * per_page < total else None
 
     return PaginatedMoviesResponse(
-        movies=movies,
+        movies=short_movies,
         prev_page=prev_url,
         next_page=next_url,
         total_pages=(total + per_page - 1) // per_page,
@@ -129,7 +130,7 @@ async def update_movie(movie_id: int, movie_update: MovieUpdate, db: AsyncSessio
     try:
         await db.commit()
         await db.refresh(movie)
-        return {"detail": "Movie updated successfully."}
+        return movie
 
     except Exception as e:
         print(f"Error occurred: {e}")
