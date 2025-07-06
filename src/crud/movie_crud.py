@@ -1,10 +1,17 @@
-from sqlalchemy import select
+from sqlalchemy import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.models import CountryModel
 
 
 async def get_or_create_country(name_or_code: str, db: AsyncSession):
-    result = await db.execute(select(CountryModel).where(CountryModel.code == name_or_code))
+    result = await db.execute(
+        select(CountryModel).where(
+            or_(
+                CountryModel.code == name_or_code,
+                CountryModel.name == name_or_code
+             )
+        )
+    )
     country = result.scalar_one_or_none()
     if not country:
         country = CountryModel(code=name_or_code)
